@@ -1,0 +1,167 @@
+openapi: 3.0.0
+info:
+  title: Carbon Emission Calculator
+  version: '1.0'
+  description: API to calculate CO2 emission for various modes of transport
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /emission/simple:
+    get:
+      summary: Simple Emission API
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Emission'
+              examples: {}
+      operationId: get-emission-calculate
+      description: Low level simple emission calculator based on fuel factor and fuel amount. This is the most basic version of the calculator.
+      security:
+        - OAuthApiKey: []
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: fuelFactor
+          description: Fuel factor in Kg/L
+        - schema:
+            type: number
+          in: query
+          name: fuelAmount
+          description: Fuel amount in L
+    parameters: []
+  /refdata/:
+    get:
+      summary: Fuel Economy Reference Data API
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  carFuel:
+                    $ref: '#/components/schemas/CarFuel'
+                required:
+                  - carFuel
+      operationId: get-emission-complex
+      description: "Get fuel type and fuel economy values for a given car's make and model"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Car'
+    parameters: []
+  /emission/complex:
+    get:
+      summary: Complex Emission API
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Emission'
+      operationId: get-emission-complex
+      description: High level emission calculator based on car details and distance travelled.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                car:
+                  $ref: '#/components/schemas/Car'
+                distance:
+                  type: number
+                  description: Distance travelled in Km
+              required:
+                - car
+                - distance
+          application/xml:
+            schema:
+              type: object
+              properties: {}
+components:
+  schemas:
+    Emission:
+      title: Emission
+      type: object
+      x-examples:
+        EmissionExample:
+          value: 100
+          unit: Kg
+      properties:
+        value:
+          type: number
+          description: CO2 emission value (e.g. 100)
+        unit:
+          type: string
+          enum:
+            - Kg
+            - Gm
+            - Lbs
+          description: 'Unit of CO2 emission (e.g. Kgs, Lbs)'
+      required:
+        - value
+        - unit
+    Car:
+      title: Car
+      type: object
+      properties:
+        make:
+          type: string
+          description: Make of the car (e.g. Honda)
+        model:
+          type: string
+          description: Model of the car (e.g. Civic)
+        year:
+          type: number
+          description: Year of making (e.g. 2018)
+      required:
+        - make
+        - model
+        - year
+    CarFuel:
+      title: CarFuel
+      type: object
+      properties:
+        car:
+          $ref: '#/components/schemas/Car'
+        fuelType:
+          type: string
+          description: 'Fuel type (e.g. Gasoline/Petrol, Diesel, Natural Gas)'
+        fuelEconomy:
+          $ref: '#/components/schemas/FuelEconomy'
+      required:
+        - car
+        - fuelType
+        - fuelEconomy
+    FuelEconomy:
+      title: FuelEconomy
+      type: object
+      properties:
+        value:
+          type: number
+          description: The value of how much fuel is needed to travel unit distance (e.g. 10)
+        unit:
+          type: string
+          enum:
+            - L/100Km
+            - Gallons/Mile
+          description: Unit of the fuel needed to travel unit distance (e.g. L/100Km)
+      required:
+        - value
+        - unit
+  securitySchemes:
+    OAuthApiKey:
+      type: oauth2
+security:
+  - API Key - 1: []
